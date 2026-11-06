@@ -1,0 +1,55 @@
+name: Alerta diário de reservas
+
+on:
+  schedule:
+    # Horário em UTC. Brasília = UTC-3.  "50 9" = 06:50 em Brasília.
+    # O GitHub pode atrasar alguns minutos, então o alerta chega por volta das 7h.
+    # Para mudar: 08:00 em Brasília -> '0 11 * * *' ; 10:30 -> '30 13 * * *'
+    - cron: '50 9 * * *'
+  workflow_dispatch:   # permite rodar na mão pela aba "Actions" (para testar)
+
+permissions:
+  contents: write      # só para o passo "manter agendamento ativo"
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências
+        working-directory: notificacoes
+        run: npm install --no-audit --no-fund
+
+      - name: Enviar resumo do dia
+        working-directory: notificacoes
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_CONTATO: ${{ secrets.VAPID_CONTATO }}
+          APP_URL: ${{ secrets.APP_URL }}
+          # Mude para 'nao' se não quiser alerta nos dias sem reserva
+          ENVIAR_SEM_RESERVAS: 'sim'
+        run: node enviar-resumo.js
+
+      # O GitHub desliga agendamentos de repositórios sem atividade há 60 dias.
+      # Este passo faz um "commit vazio" a cada ~45 dias para isso não acontecer.
+      - name: Manter agendamento ativo
+        if: github.event_name == 'schedule'
+        run: |
+          ultimo=$(git log -1 --format=%ct)
+          agora=$(date +%s)
+          dias=$(( (agora - ultimo) / 86400 ))
+          if [ "$dias" -ge 45 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "Manter alerta diário ativo"
+            git push
+          fi

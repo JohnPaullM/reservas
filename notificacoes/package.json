@@ -1,0 +1,14 @@
+{
+  "name": "reservas-notificacoes",
+  "private": true,
+  "description": "Envia o resumo diário das reservas por notificação push",
+  "main": "enviar-resumo.js",
+  "scripts": {
+    "enviar": "node enviar-resumo.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "web-push": "^3.6.7"
+  }
+}

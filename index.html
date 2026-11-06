@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Reservas</title>
+  <meta name="theme-color" content="#24453c">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Reservas">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="faixa-demo" class="faixa-demo" hidden>
+    Modo demonstração — os dados ficam só neste navegador. Configure o <b>config.js</b> para usar com a equipe.
+  </div>
+
+  <!-- ============ LOGIN ============ -->
+  <section id="tela-login" class="tela-login" hidden>
+    <form id="form-login" class="cartao login-cartao">
+      <img src="icons/icon-192.png" alt="" width="64" height="64" class="login-logo">
+      <h1 class="login-titulo" id="login-titulo">Reservas</h1>
+      <p class="sutil">Entre com o e-mail e a senha cadastrados.</p>
+      <label>E-mail
+        <input type="email" id="login-email" autocomplete="username" required>
+      </label>
+      <label>Senha
+        <input type="password" id="login-senha" autocomplete="current-password" required>
+      </label>
+      <p id="login-erro" class="erro" hidden></p>
+      <button type="submit" class="btn btn-primario btn-largo" id="btn-entrar">Entrar</button>
+    </form>
+  </section>
+
+  <!-- ============ APP ============ -->
+  <div id="app" hidden>
+    <header class="topo">
+      <h1 class="topo-titulo" id="titulo">Reservas</h1>
+      <div class="topo-acoes">
+        <button class="btn btn-fantasma" id="btn-hoje">Hoje</button>
+        <button class="btn btn-fantasma" id="btn-instalar" hidden title="Instalar o app">Instalar</button>
+        <button class="btn btn-fantasma" id="btn-alertas" title="Receber o resumo diário neste aparelho">
+          <span aria-hidden="true">🔔</span> <span id="txt-alertas">Ativar alertas</span>
+        </button>
+        <button class="btn btn-fantasma" id="btn-sair" title="Sair">Sair</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="cartao calendario" aria-label="Calendário">
+        <div class="cal-topo">
+          <button class="btn-icone" id="mes-ant" aria-label="Mês anterior">‹</button>
+          <h2 id="mes-titulo"></h2>
+          <button class="btn-icone" id="mes-prox" aria-label="Próximo mês">›</button>
+        </div>
+        <div class="cal-semana">
+          <span>dom</span><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span>
+        </div>
+        <div id="cal-grade" class="cal-grade"></div>
+      </section>
+
+      <section class="cartao dia" aria-label="Reservas do dia">
+        <div class="dia-topo">
+          <h2 id="dia-titulo"></h2>
+          <p id="dia-resumo" class="sutil"></p>
+        </div>
+        <ul id="lista" class="lista"></ul>
+      </section>
+    </main>
+
+    <button class="fab" id="btn-nova"><span aria-hidden="true">+</span> Nova reserva</button>
+  </div>
+
+  <!-- ============ FORMULÁRIO ============ -->
+  <dialog id="dlg-form" class="dialogo">
+    <form id="form-reserva" novalidate>
+      <h2 id="form-titulo">Nova reserva</h2>
+      <label>Motivo*
+        <input type="text" name="motivo" maxlength="120" placeholder="Ex.: Aniversário, jantar de empresa" required>
+      </label>
+      <div class="linha">
+        <label>Dia*
+          <input type="date" name="data" required>
+        </label>
+        <label>Hora*
+          <input type="time" name="hora" required>
+        </label>
+        <label>Pessoas*
+          <input type="number" name="pessoas" min="1" max="999" inputmode="numeric" required>
+        </label>
+      </div>
+      <div class="linha">
+        <label>Cliente
+          <input type="text" name="cliente" maxlength="120" placeholder="Nome de quem reservou">
+        </label>
+        <label>Telefone
+          <input type="tel" name="telefone" maxlength="30" placeholder="(11) 90000-0000">
+        </label>
+      </div>
+      <label>Observações
+        <textarea name="observacoes" rows="3" maxlength="1000" placeholder="Bolo, cadeira de bebê, restrições alimentares…"></textarea>
+      </label>
+      <fieldset class="grupo">
+        <legend>Pedidos especiais</legend>
+        <div id="extras" class="extras"></div>
+      </fieldset>
+      <fieldset class="grupo">
+        <legend>Fotos</legend>
+        <div id="anexos-grade" class="anexos-grade"></div>
+        <label class="btn btn-fantasma btn-anexar">
+          <span aria-hidden="true">📎</span> Adicionar fotos
+          <input type="file" id="input-fotos" accept="image/*" multiple class="invisivel">
+        </label>
+        <p class="sutil dica">Tire na hora ou escolha da galeria. As fotos são reduzidas automaticamente.</p>
+      </fieldset>
+      <label id="campo-status" hidden>Situação
+        <select name="status">
+          <option value="confirmada">Confirmada</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </label>
+      <p id="form-erro" class="erro" hidden></p>
+      <div class="dialogo-acoes">
+        <button type="button" class="btn btn-perigo" id="btn-excluir" hidden>Excluir</button>
+        <span class="espaco"></span>
+        <button type="button" class="btn btn-fantasma" id="btn-cancelar-form">Fechar</button>
+        <button type="submit" class="btn btn-primario" id="btn-salvar">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ============ AJUDA IPHONE ============ -->
+  <dialog id="dlg-ios" class="dialogo">
+    <h2>Alertas no iPhone</h2>
+    <p>No iPhone, os alertas só funcionam com o app instalado na tela de início:</p>
+    <ol class="passos">
+      <li>Abra este endereço no <b>Safari</b>.</li>
+      <li>Toque em <b>Compartilhar</b> (o quadrado com a seta para cima).</li>
+      <li>Escolha <b>Adicionar à Tela de Início</b>.</li>
+      <li>Abra o app pelo novo ícone, entre e toque em <b>🔔 Ativar alertas</b>.</li>
+    </ol>
+    <p class="sutil">Precisa do iOS 16.4 ou mais recente.</p>
+    <div class="dialogo-acoes"><span class="espaco"></span>
+      <button class="btn btn-primario" id="btn-fechar-ios">Entendi</button>
+    </div>
+  </dialog>
+
+  <!-- ============ VER FOTO ============ -->
+  <dialog id="dlg-foto" class="dialogo dialogo-foto">
+    <img id="foto-grande" alt="Foto da reserva">
+    <div class="dialogo-acoes">
+      <a id="foto-abrir" class="btn btn-fantasma" target="_blank" rel="noopener" download>Abrir / baixar</a>
+      <span class="espaco"></span>
+      <button class="btn btn-primario" id="btn-fechar-foto">Fechar</button>
+    </div>
+  </dialog>
+
+  <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
